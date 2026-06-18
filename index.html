@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>יקב פלם — הדגמת בוט וואטסאפ</title>
+<style>
+  :root{ --wa-teal:#008069; --wa-chat:#efeae2; --wa-in:#ffffff; --wa-out:#d9fdd3; --ink:#111b21; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Segoe UI",Helvetica,Arial,sans-serif; background:#cfd6da;
+        min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:18px 10px; color:var(--ink); }
+  .intro{ max-width:420px; text-align:center; margin-bottom:12px; }
+  .intro h1{ font-size:18px; margin:0 0 4px; }
+  .intro p{ font-size:12px; color:#3b4a54; margin:0; }
+  .phone{ width:100%; max-width:420px; height:82vh; min-height:560px; background:var(--wa-chat);
+          border-radius:18px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,.28); display:flex; flex-direction:column; }
+  .hdr{ background:var(--wa-teal); color:#fff; padding:10px 14px; display:flex; align-items:center; gap:10px; }
+  .ava{ width:38px; height:38px; border-radius:50%; background:#0a8f74; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .hdr .nm{ font-weight:600; font-size:15px; line-height:1.1; }
+  .hdr .st{ font-size:11px; opacity:.85; }
+  .chat{ flex:1; overflow-y:auto; padding:14px 10px; direction:ltr; display:flex; flex-direction:column; gap:7px;
+         background-image:linear-gradient(rgba(229,221,213,.6),rgba(229,221,213,.6)); }
+  .row{ display:flex; }
+  .b{ max-width:82%; padding:7px 10px 6px; border-radius:9px; font-size:14.5px; line-height:1.42;
+      white-space:pre-wrap; word-wrap:break-word; direction:rtl; text-align:right; box-shadow:0 1px .5px rgba(0,0,0,.13); }
+  .bot{ align-self:flex-start; background:var(--wa-in); border-top-left-radius:2px; }
+  .me { align-self:flex-end; background:var(--wa-out); border-top-right-radius:2px; }
+  .b .t{ display:block; font-size:10px; color:#667781; text-align:left; margin-top:2px; }
+  .typing{ align-self:flex-start; background:#fff; border-radius:9px; padding:9px 12px; }
+  .typing span{ display:inline-block; width:6px; height:6px; margin:0 1px; background:#9aa6ad; border-radius:50%; animation:bl 1.2s infinite; }
+  .typing span:nth-child(2){ animation-delay:.2s } .typing span:nth-child(3){ animation-delay:.4s }
+  @keyframes bl{ 0%,60%,100%{opacity:.3} 30%{opacity:1} }
+  .quick{ display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px 2px; background:var(--wa-chat); }
+  .chip{ border:1px solid var(--wa-teal); color:var(--wa-teal); background:#fff; border-radius:16px;
+         padding:5px 11px; font-size:13px; cursor:pointer; }
+  .chip:active{ background:#e7f4f0; }
+  .bar{ display:flex; gap:8px; padding:8px 10px; background:var(--wa-chat); align-items:center; }
+  .bar input{ flex:1; border:none; border-radius:20px; padding:10px 14px; font-size:14px; outline:none; }
+  .bar button{ border:none; background:var(--wa-teal); color:#fff; width:42px; height:42px; border-radius:50%;
+               font-size:18px; cursor:pointer; }
+  .foot{ max-width:420px; font-size:11px; color:#3b4a54; text-align:center; margin-top:10px; }
+  .restart{ background:none; border:none; color:var(--wa-teal); cursor:pointer; font-size:12px; text-decoration:underline; }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>🍷 יקב פלם — בוט וואטסאפ (הדגמה)</h1>
+    <p>הדגמה אינטראקטיבית. הבוט נכנס לפעולה גם אחרי שיחה שלא נענתה וגם כשלקוח כותב הודעה ישירה. הקישו מספר, נסו 5️⃣ (פנייה עסקית) ו‑0️⃣ (English).</p>
+  </div>
+
+  <div class="phone">
+    <div class="hdr">
+      <div class="ava">🍷</div>
+      <div><div class="nm">יקב פלם</div><div class="st">מקוון</div></div>
+    </div>
+    <div class="chat" id="chat"></div>
+    <div class="quick" id="quick"></div>
+    <div class="bar">
+      <input id="inp" placeholder="הקלידו הודעה…" autocomplete="off">
+      <button id="snd" title="שליחה">➤</button>
+    </div>
+  </div>
+  <div class="foot">
+    הדגמה בלבד — אינה מחוברת לוואטסאפ אמיתי, ואין שמירת נתונים.
+    &nbsp;·&nbsp; <button class="restart" id="rst">התחלה מחדש</button>
+  </div>
+
+<script>
+// ── Sample fills (the {{…_PLACEHOLDER}} values in the real workflow) ──
+const FILL = {
+  TABIT_URL:'https://tbit.be/GiDKuR',
+  PDF_URL:'https://flam.co.il/private-events.pdf (דוגמה)',
+  HOSTING_INFO:'אנו מציעים מגוון חוויות אירוח וטעימות ביקב:\n\n🍷 טעימות יין קלאסיות — 155 ₪ לאדם: 4 יינות, פלטת גבינות זוגית, בגט טרי ומטבלים\n🍷 טעימות פרימיום — 195 ₪ לאדם: 3 מיינות היקב, פלטת גבינות זוגית, בגט טרי ומטבלים\n🧀 בקבוק יין + פלטת גבינות ללא הדרכה\n\nכמו כן הדרכות לארגונים ואירועים עסקיים/פרטיים — בחדר הטעימות או ברחבת היקב החיצונית. הישיבה ברובה באוויר הפתוח, מומלץ להתלבש בהתאם למזג האוויר. היקב אינו מציע סיורים כחלק מחוויית האירוח (ניתן לתאם סדנאות יין לקבוצות הכוללות סיור).',
+  HOSTING_INFO_EN:'We offer a variety of hosting and tasting experiences at the winery:\n\n🍷 Classic wine tasting — ₪155 pp: 4 wines, a cheese platter for two, fresh baguette and dips\n🍷 Premium tasting — ₪195 pp: 3 winery wines, a cheese platter for two, fresh baguette and dips\n🧀 Bottle of wine + cheese platter, no guided tasting\n\nWe also host guided tastings for organizations and business/private events — in the tasting room or on the outdoor winery terrace. Seating is mostly outdoors, so please dress for the weather.',
+  HOURS:'א׳–ה׳ 10:00–16:00 · ו׳ עד 15:00',
+  HOURS_EN:'Sun–Thu 10:00–16:00 · Fri until 15:00'
+};
+const NAME=''; // demo customer has no profile name → greeting stays "שלום" / "Hi"
+const Q_DATE  = 'מה התאריך והשעה הרצויים לאירוע?\n(לדוגמה: 15 בספטמבר בשעה 19:00, או "עדיין גמיש")';
+const Q_GUEST = 'כמה אורחים צפויים באירוע?';
+const Q_DATE_EN  = 'What date and time would you like for the event?\n(e.g., September 15 at 7:00 PM, or "still flexible")';
+const Q_GUEST_EN = 'How many guests do you expect?';
+
+// ── State (in-memory; mirrors the Google Sheet State tab incl. the new `lang` column) ──
+let State=[]; let clk=Date.now();
+const nowISO=()=>new Date(clk++).toISOString();
+const pushState=(branch,step,data,cleared,lang)=>State.push({branch,step,data,lang:lang||'he',updated_at:nowISO(),cleared});
+function activeState(){
+  const rows=State.slice().sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at));
+  const latest=rows[0]||null;
+  const isActive=!!(latest&&latest.branch&&latest.cleared!=='yes');
+  const lang=(latest&&latest.lang)?latest.lang:'he';   // persists even after a branch is cleared
+  return { hasActiveState:isActive, stateBranch:isActive?latest.branch:'', stateStep:isActive?latest.step:'', stateData:isActive?(latest.data||''):'', lang };
+}
+
+// ── Parse (mirrors Parse Message digit-map + silent נציג detection) ──
+function parse(text){
+  text=(text||'').trim(); let replyId='';
+  const d={'0':'opt_0','1':'opt_1','2':'opt_2','3':'opt_3','4':'opt_4','5':'opt_5','6':'opt_6'};
+  if(d[text]) replyId=d[text];
+  if(text&&(/(^|\s)נציג(\s|$)/.test(text)||/\bagent\b/i.test(text))) replyId='opt_agent';
+  if(!replyId&&text) replyId='free_text';
+  return {text,replyId};
+}
+const greet=(n,lang)=> lang==='en' ? ('Hi'+(n?' '+n:'')) : ('שלום'+(n?' '+n:''));
+const thank=(n,lang)=> lang==='en' ? ('Thanks'+(n?' '+n:'')) : ('תודה'+(n?' '+n:''));
+const T=(lang,he,en)=> lang==='en' ? en : he;
+
+// ── Router (mirrors the workflow branches: business split + bilingual lang flag) ──
+function botReply(userText){
+  const {text,replyId}=parse(userText); const st=activeState(); const out=[]; const name=NAME; let lang=st.lang;
+  if(st.hasActiveState){
+    if(replyId==='opt_agent'){
+      pushState(st.stateBranch,'done','','yes',lang);
+      out.push(T(lang, thank(name,lang)+'! מיד נעביר לצוות 🍷 מישהו מהצוות שלנו יחזור אליך עד סוף יום העסקים.',
+                       thank(name,lang)+'! Connecting you to the team 🍷 Someone from our team will get back to you by end of business day.'));
+    } else {
+      const key=st.stateBranch+'_'+st.stateStep;
+      if(key==='b4_waiting_date'){ pushState('b4','waiting_guests',text,'no',lang); out.push(T(lang,'מעולה! '+Q_GUEST,'Great! '+Q_GUEST_EN)); }
+      else if(key==='b4_waiting_guests'){ pushState('b4','done','','yes',lang);
+        out.push(T(lang,
+          thank(name,lang)+'! ✅\n\nקיבלנו:\n• תאריך ושעה: '+st.stateData+'\n• אורחים: '+text+'\n\nהנה חוברת האירועים שלנו לרקע: '+FILL.PDF_URL+'\n\nטוהר מהצוות שלנו תיצור איתך קשר עד סוף יום העסקים 🍷',
+          thank(name,lang)+'! ✅\n\nWe’ve got:\n• Date & time: '+st.stateData+'\n• Guests: '+text+'\n\nHere’s our events brochure for reference: '+FILL.PDF_URL+'\n\nTohar from our team will contact you by end of business day 🍷')); }
+      else if(key==='b5_choose_type'){
+        if(text==='1'){ pushState('b5','done','','yes',lang);
+          out.push(T(lang,
+            thank(name,lang)+'! קיבלנו את פנייתך להזמנת יין לעסק 🍷 ענבר מהצוות שלנו תיצור איתך קשר עד סוף יום העסקים.\n\nאפשר גם לפנות ישירות לענבר: 054-2113324',
+            thank(name,lang)+'! We’ve received your company wine order request 🍷 Inbar from our team will contact you by end of business day.\n\nYou can also reach Inbar directly: 054-2113324')); }
+        else if(text==='2'){ pushState('b5','waiting_company','','no',lang); out.push(T(lang,'מצוין! מה שם החברה?','Excellent! What is the company name?')); }
+        else { out.push(T(lang,
+            'אנא השיבו 1 או 2:\n1️⃣ הזמנת יין לעסק / מתנות לעובדים\n2️⃣ אירוע או הדרכה לחברה ביקב',
+            'Please reply 1 or 2:\n1️⃣ Company wine order / employee gifts\n2️⃣ Corporate event or tasting at the winery')); }
+      }
+      else if(key==='b5_waiting_company'){ pushState('b5','waiting_date',text,'no',lang); out.push(T(lang,'תודה! '+Q_DATE,'Thank you! '+Q_DATE_EN)); }
+      else if(key==='b5_waiting_date'){ pushState('b5','waiting_guests',JSON.stringify({company:st.stateData,date:text}),'no',lang); out.push(T(lang,'מעולה! '+Q_GUEST,'Great! '+Q_GUEST_EN)); }
+      else if(key==='b5_waiting_guests'){ const o=JSON.parse(st.stateData); pushState('b5','done','','yes',lang);
+        out.push(T(lang,
+          thank(name,lang)+'! ✅\n\nקיבלנו:\n• חברה: '+o.company+'\n• תאריך ושעה: '+o.date+'\n• אורחים: '+text+'\n\nענבר מהצוות שלנו תיצור איתך קשר עד סוף יום העסקים 🍷',
+          thank(name,lang)+'! ✅\n\nWe’ve got:\n• Company: '+o.company+'\n• Date & time: '+o.date+'\n• Guests: '+text+'\n\nInbar from our team will contact you by end of business day 🍷')); }
+      else if(key==='b6_waiting_message'){ pushState('b6','done','','yes',lang);
+        out.push(T(lang,
+          thank(name,lang)+'! קיבלנו את ההודעה 🍷 נציג ממרכז המבקרים יקרא ויחזור אליך עד סוף יום העסקים.',
+          thank(name,lang)+'! We’ve got your message 🍷 A visitor-center rep will read it and get back to you by end of business day.')); }
+    }
+  } else {
+    switch(replyId){
+      case 'opt_1': out.push(T(lang,
+        greet(name,lang)+'! 🍷\n\nלתיאום ביקור והגעה ליקב פלם — לחצו כאן:\n'+FILL.TABIT_URL+'\n\nיש שאלות נוספות? השאירו שם וטלפון ונחזור אליכם ברגע שנתפנה.',
+        greet(name,lang)+'! 🍷\n\nTo book a visit to Flam Winery, tap here:\n'+FILL.TABIT_URL+'\n\nAny other questions? Leave your name and number and we’ll get back to you.')); break;
+      case 'opt_2': out.push(T(lang,
+        greet(name,lang)+'! 🍷\n\n'+FILL.HOSTING_INFO+'\n\n🕒 שעות: '+FILL.HOURS+'\n\nלתיאום ביקור: '+FILL.TABIT_URL,
+        greet(name,lang)+'! 🍷\n\n'+FILL.HOSTING_INFO_EN+'\n\n🕒 Hours: '+FILL.HOURS_EN+'\n\nBook a visit: '+FILL.TABIT_URL)); break;
+      case 'opt_3': out.push(T(lang,
+        thank(name,lang)+'! קיבלנו את פנייתך לרכישת יין 🍷\n\nנחזור אליך ללקיחת הזמנה — המשלוח מגיע עד 5 ימי עסקים.\n\nאפשר גם לפנות ישירות לענבר: 054-2113324',
+        thank(name,lang)+'! We’ve received your wine order request 🍷\n\nWe’ll get back to you to take the order — delivery within 5 business days.\n\nYou can also reach Inbar directly: 054-2113324')); break;
+      case 'opt_4': pushState('b4','waiting_date','','no',lang); out.push(T(lang,
+        greet(name,lang)+'! 🍷 שמחים שפנית לגבי אירוע פרטי.\n\nנשמח להכין הצעה מותאמת.\n'+Q_DATE,
+        greet(name,lang)+'! 🍷 Glad you’re interested in a private event.\n\nWe’d love to prepare a tailored offer.\n'+Q_DATE_EN)); break;
+      case 'opt_5': pushState('b5','choose_type','','no',lang); out.push(T(lang,
+        greet(name,lang)+'! שמחים לשמוע על פנייה עסקית 🍷\n\nבמה נוכל לעזור? השיבו עם מספר:\n1️⃣ הזמנת יין לעסק / מתנות לעובדים\n2️⃣ אירוע או הדרכה לחברה ביקב',
+        greet(name,lang)+'! Glad to hear about your business inquiry 🍷\n\nHow can we help? Reply with a number:\n1️⃣ Company wine order / employee gifts\n2️⃣ Corporate event or tasting at the winery')); break;
+      case 'opt_6': pushState('b6','waiting_message','','no',lang); out.push(T(lang,
+        greet(name,lang)+'! 🍷\n\nכתבו כאן את השאלה או הבקשה שלכם — נציג ממרכז המבקרים יקרא ויחזור אליכם.',
+        greet(name,lang)+'! 🍷\n\nWrite your question or request here — a visitor-center rep will read it and get back to you.')); break;
+      case 'opt_0': pushState('','','','yes','en');
+        out.push('Hello! Welcome to Flam Winery 🍷\n\nHow can we help? Reply with a number:\n\n1️⃣ Book a visit (self-service via Tabit)\n2️⃣ Hosting & event info\n3️⃣ Wine delivery / ordering\n4️⃣ Private event\n5️⃣ Business event / inquiry\n6️⃣ Other — leave a message and we’ll get back to you'); break;
+      case 'opt_agent': out.push(T(lang,
+        thank(name,lang)+'! מיד נעביר לצוות 🍷 מישהו מהצוות שלנו יחזור אליך עד סוף יום העסקים.',
+        thank(name,lang)+'! Connecting you to the team 🍷 Someone from our team will get back to you by end of business day.')); break;
+      default: out.push(T(lang,
+        thank(name,lang)+'! קיבלנו את פנייתך 🍷 נציג ממרכז המבקרים יקרא ויחזור אליך עד סוף יום העסקים.',
+        thank(name,lang)+'! We’ve received your message 🍷 A visitor-center rep will read it and get back to you by end of business day.'));
+    }
+  }
+  return out;
+}
+
+// ── UI ──
+const chat=document.getElementById('chat'), quick=document.getElementById('quick'),
+      inp=document.getElementById('inp'), snd=document.getElementById('snd');
+const time=()=>new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+function bubble(text,who){
+  const row=document.createElement('div'); row.className='row';
+  const b=document.createElement('div'); b.className='b '+(who==='me'?'me':'bot'); b.dir='auto';
+  b.textContent=text; const t=document.createElement('span'); t.className='t'; t.textContent=time(); b.appendChild(t);
+  row.appendChild(b); chat.appendChild(row); chat.scrollTop=chat.scrollHeight;
+}
+function typing(on){
+  let el=document.getElementById('typing');
+  if(on){ if(!el){ el=document.createElement('div'); el.id='typing'; el.className='typing';
+    el.innerHTML='<span></span><span></span><span></span>'; chat.appendChild(el); chat.scrollTop=chat.scrollHeight; } }
+  else if(el){ el.remove(); }
+}
+const MENU_HE=[['1️⃣','1'],['2️⃣','2'],['3️⃣','3'],['4️⃣','4'],['5️⃣','5'],['6️⃣ הודעה','6'],['English','0']];
+const MENU_EN=[['1️⃣','1'],['2️⃣','2'],['3️⃣','3'],['4️⃣','4'],['5️⃣','5'],['6️⃣ Message','6']];
+const BIZ_HE=[['1️⃣ הזמנת יין','1'],['2️⃣ אירוע','2']];
+const BIZ_EN=[['1️⃣ Wine order','1'],['2️⃣ Event','2']];
+function renderChips(){
+  quick.innerHTML='';
+  const st=activeState();
+  let chips=null;
+  if(st.stateBranch==='b5' && st.stateStep==='choose_type'){ chips = st.lang==='en'?BIZ_EN:BIZ_HE; }   // business split: offer 1/2
+  else if(!st.hasActiveState){ chips = st.lang==='en'?MENU_EN:MENU_HE; }                                  // top menu
+  if(!chips) return;                                                                                       // other mid-flow steps: customer just types
+  for(const [label,val] of chips){ const c=document.createElement('div'); c.className='chip'; c.textContent=label;
+    c.onclick=()=>send(val); quick.appendChild(c); }
+}
+function send(text){
+  text=(text||'').trim(); if(!text) return; inp.value='';
+  bubble(text,'me'); typing(true);
+  const replies=botReply(text); let i=0;
+  (function next(){
+    if(i>=replies.length){ typing(false); renderChips(); return; }
+    setTimeout(()=>{ typing(false); bubble(replies[i],'bot'); i++; if(i<replies.length) typing(true); next(); }, 650);
+  })();
+}
+function start(){
+  chat.innerHTML=''; State=[];
+  const opener='שלום!\n\nהתקשרת אלינו קודם ולא הספקנו לענות — מתנצלים! נשמח לעזור עכשיו 🍷\n\nבאיזה נושא נוכל לסייע?\n\n'+
+    '1️⃣ תיאום ביקור\n2️⃣ מידע על אירוח ואירועים\n3️⃣ שאלה על משלוח / הזמנת יין\n4️⃣ אירוע פרטי\n5️⃣ אירוע / פנייה עסקית\n6️⃣ אחר — להשאיר הודעה ונחזור אליכם\n0️⃣ English';
+  typing(true); setTimeout(()=>{ typing(false); bubble(opener,'bot'); renderChips(); }, 700);
+}
+snd.onclick=()=>send(inp.value);
+inp.addEventListener('keydown',e=>{ if(e.key==='Enter') send(inp.value); });
+document.getElementById('rst').onclick=start;
+start();
+</script>
+</body>
+</html>
