@@ -227,4 +227,13 @@ function send(text){
 function start(){
   chat.innerHTML=''; State=[];
   const opener='ברוכים הבאים ליקב פלם 🍷\nנראה שאין ביכולתנו לענות כרגע, באיזה נושא נוכל לסייע?\n\n'+
-    '1️⃣ תיאום ביקור ב
+    '1️⃣ תיאום ביקור במרכז המבקרים\n2️⃣ מידע כללי על אירוח\n3️⃣ הזמנת יין במשלוח\n4️⃣ אירועים פרטיים\n5️⃣ פניות עסקיות / אירועים עסקיים\n6️⃣ אחר — השארת פנייה ונחזור אליכם\n7️⃣ English';
+  typing(true); setTimeout(()=>{ typing(false); bubble(opener,'bot'); renderChips(); }, 700);
+}
+snd.onclick=()=>send(inp.value);
+inp.addEventListener('keydown',e=>{ if(e.key==='Enter') send(inp.value); });
+document.getElementById('rst').onclick=start;
+start();
+</script>
+</body>
+</html>
